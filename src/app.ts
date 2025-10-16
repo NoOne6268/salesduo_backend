@@ -16,7 +16,7 @@ const allowedOrigins = allowedOriginsEnv.split(",").map(s => s.trim()).filter(Bo
 
 const allowCredentials = (process.env.CORS_ALLOW_CREDENTIALS || "false").toLowerCase() === "true";
 
-function isAllowedOrigin(origin) {
+function isAllowedOrigin(origin: string | undefined | null): boolean {
   if (!origin) return true; // server-side or non-browser calls
   if (allowedOrigins.includes(origin)) return true;
   try {
