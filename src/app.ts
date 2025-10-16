@@ -36,24 +36,27 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // origin === undefined for server-side requests; allow those
-    if (isAllowedOrigin(origin)) {
-      return callback(null, true);
-    }
-    // do NOT throw here; fail gracefully
-    return callback(null, false);
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-  credentials: allowCredentials,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowed = isAllowedOrigin(origin);
+  // configure a cors middleware instance dynamically for this request
+  const corsMiddleware = cors({
+    origin: allowed ? origin || true : false,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+    credentials: allowCredentials,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+  });
 
-// ensure OPTIONS returns correctly
-app.options("*", (req, res) => res.sendStatus(204));
+  // If this is an OPTIONS (preflight) request, run the cors middleware then end with 204
+  if (req.method === "OPTIONS") {
+    return corsMiddleware(req, res, () => res.sendStatus(204));
+  }
+
+  // For non-OPTIONS, just run cors and continue
+  return corsMiddleware(req, res, next);
+});
 
 app.use("/api", routes);
 
